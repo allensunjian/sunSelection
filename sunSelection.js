@@ -678,7 +678,7 @@
     function clearSelectedValue() {
         scope.clearSelectedValue()
     }
-    $w.initSelector = function (data, options) {
+    function initSelector (data, options) {
         _initData(data);
         _initAlias(options);
         $v.use(_init());
@@ -687,4 +687,7 @@
             clearSelected: clearSelectedValue
         }
     }
+    Vue.prototype.initSelector = initSelector;
+    $w.initSelector = initSelector;
+
 })(Vue, window);
