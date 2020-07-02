@@ -12,7 +12,6 @@
  *    Note: 修改私有作用域，创建多个组件时，传入不同的名称即可
  *
  */
-
 (function ($v, $w) {
     function CreateSelector(Selectiondata, options, componentName) {
         var scope = null;
@@ -125,7 +124,7 @@
                     }
                 },
                 _createLevel: function (level, index) {
-                    return level + "" + index.toString(16)
+                    return level + "" + index.toString(36);
                 },
                 _computedStyleText: function (layoutObj, listDefault) {
                     var cssText = "";
@@ -158,7 +157,7 @@
                     return el.parentNode
                 },
                 computedLinkMap: function (link, text, id, level) {
-                    var map = []
+                    var map = [];
                     for (var i = 0; i <= level; i++) {
                         map.push(link.slice(0, 2 + i))
                     };
@@ -187,7 +186,6 @@
                     this.selectedIdList = [];
                 },
                 close: function () {
-                    console.log("close")
                     this.hoverSelectorStateList = [];
                     this.$emit("closepanle")
                 }
@@ -293,7 +291,6 @@
                     this.hoverSelectorStateList.forEach(function (item, index) {
                         states.push(item)
                     });
-                    console.log(this.hoverSelectorStateList);
                     this.swicthSelectedNumEvent(function (isFull, verNum) {
                         var index = this.selectedIdList.indexOf(dataset.id);
                         // 取消选项 逻辑
@@ -329,7 +326,6 @@
                 } else {
                     this.$set(this.hoverSelectorStateList, level, name);
                 }
-                console.log(this.hoverSelectorStateList);
             },
             switchLastOnly (isLast, next) {
                 if (this.option.lastOnly) {
@@ -414,7 +410,7 @@
                 if (num == 0) {
                     return "width:" + this.dropSize.itemWidth + "px;"
                 }
-                return "width:" + this.dropSize.itemWidth + "px;left: " + this.dropSize.itemWidth + "px";
+                return "width:" + this.dropSize.itemWidth + "px;left: " + this.dropSize.itemWidth * num + "px";
 
             },
             _computedDefaultSelectedValue: function () {
@@ -439,6 +435,10 @@
                 }
                 // 没有选项； 默认展开第一条链
                 _this.hoverSelectorStateList = _this.patDwonDataMap.LinkListOfDataForFirst[1];
+            },
+            _computedWrapLayoput () {
+                var h = this.option.layout.wrapHeight;
+                return this.option.layout.wrapHeight ? h + "px" : ""
             }
         };
         var createElementFramework = function () {
@@ -467,6 +467,7 @@
                         deepList = "";
                     }
                     o.linkMap = util.tools.computedLinkMap(zlevel, o[alias.text], o[alias.id], level);
+
                     _data.patDwonDataMap[o[alias.id]] = o;
                     deepItem += util.elementLayout.createListItem(o[alias.text] + deepList, {
                         class: classMap.LineItem + " " + (level > 0 && Boolean(deepList) && "sunSelection__state_hasChildren"),
@@ -504,6 +505,7 @@
             function createDeep(arr, level, parent) {
                 var deepList = "",
                     deepItem = "",
+                    deepSpan = "",
                     packing = function (text, props) {
                         return util.elementLayout.createPackingElement(text, props)
                     },
@@ -516,7 +518,7 @@
                             class: classMap.DropPanel_list,
                             "data-parent": zlevel,
                             "v-show": "hoverSelectorStateList.indexOf(" + "'" + zlevel + "'" + ") >= 0",
-                            ":style": " _computedDropPanelItemSize(" + level + 1 + ") "
+                            ":style": " _computedDropPanelItemSize(" + (level + 1) + ") ",
                         });
                     } else {
                         deepList = "";
@@ -524,7 +526,7 @@
                     o.linkMap = util.tools.computedLinkMap(zlevel, o[alias.text], o[alias.id], level);
                     _data.patDwonDataMap[o[alias.id]] = o;
                     packItem = packing(o[alias.text], {
-                        class: "drop__packing" + " " + (Boolean(deepList) && "sunSelection__state_hasChildren"),
+                        class: "drop__packing" ,
                         "@click.stop": "itemClick($event)",
                         "@mouseover.stop": "itemOver",
                         "data-id": o[alias.id],
@@ -536,8 +538,9 @@
                         "data-module": "drop",
                         ":class": "{'sunSelection__icon_selected': selectedIdList.indexOf(" + "'" + o[alias.id] + "'" + ") >= 0}"
                     })
+
                     deepItem += util.elementLayout.createListItem(packItem + deepList, {
-                        class: classMap.DropPanel_listItem,
+                        class: classMap.DropPanel_listItem + " " + (Boolean(deepList) && "sunSelection__state_hasChildren"),
                         ":style": "_computedItemDefaultSize()",
                         ":class": "{'sunSelection__state_hover': (hoverSelectorStateList.indexOf(" + "'" + zlevel + "'" + ") >= 0)," +
                             "'sunSelection__state_selected': __computedSelectedItemList(" + index + "," + "'" + zlevel + "'" + ")" +
@@ -570,7 +573,8 @@
             return util.elementLayout.createWrap(title + selector + listWrap, {
                 class: classMap.DropPanel,
                 "v-show": "showdrop",
-                "ref": "dropPanel"
+                "ref": "dropPanel",
+                ":style": "_computedWrapLayoput()"
             })
 
 
@@ -642,7 +646,6 @@
             Object.keys(lifeCircy).forEach(function (key) {
                 component[key] = lifeCircy[key]
             });
-            console.log(component);
             return component;
         }
         function iniComponent() {
@@ -670,9 +673,9 @@
         //  _initGlobalEvents
         function _initGlobalEvents() {
             var _this = this;
-            document.onclick = function (e) {
+            document.addEventListener("click", function (e) {
                 util.controlls.close.call(_this);
-            }
+            })
         }
         //  通过ID拿到当前选择的数据
         function getValueForId(ids) {
@@ -690,11 +693,11 @@
         function clearSelectedValue() {
             scope.clearSelectedValue()
         }
-        function _createComponentName (componentName) {
+        function _createComponentName(componentName) {
             if (!componentName) return;
             name = componentName;
         }
-        function initSelector (data, options, name) {
+        function initSelector(data, options, name) {
             _initData(data);
             _initAlias(options);
             _createComponentName(name);
